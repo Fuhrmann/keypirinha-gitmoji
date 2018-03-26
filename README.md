@@ -5,6 +5,8 @@ This is gitmoji, a plugin for the
 
 Search for [gitmoji](https://github.com/carloscuesta/gitmoji) and copy them to your clipboard. Include them in your commit messages to a better way of identifying the purpose of a commit.
 
+![Demo](usage.gif)
+
 ## Download
 
 https://github.com/Fuhrmann/keypirinha-gitmoji/releases
