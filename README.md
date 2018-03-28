@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/gitmoji.ico" width="100" height="100" />
+</p>
+
 # Keypirinha Plugin: gitmoji
 
 This is gitmoji, a plugin for the
