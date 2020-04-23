@@ -3,6 +3,7 @@
 import keypirinha as kp
 import keypirinha_util as kpu
 import keypirinha_net as kpnet
+from .pyperclip import copy as pcopy
 import json
 from datetime import datetime
 import os.path
@@ -16,13 +17,17 @@ class gitmoji(kp.Plugin):
     GITMOJI_URL = "https://raw.githubusercontent.com/carloscuesta/gitmoji/master/src/data/gitmojis.json"
     DAYS_KEEP_CACHE = 7
     ITEMCAT = kp.ItemCategory.USER_BASE + 1
+    ACTION_ITEMCAT = kp.ItemCategory.USER_BASE + 2
 
     def __init__(self):
         super().__init__()
         self.emojis = []
+        self.default_copy_action = 'code'
 
     def on_start(self):
+        self.read_config()
         self.generate_cache()
+        self.create_actions()
         self.get_gitmoji()
         pass
 
@@ -54,8 +59,29 @@ class gitmoji(kp.Plugin):
 
         return False
 
+    def on_events(self, flags):
+        if flags & kp.Events.PACKCONFIG:
+            self.read_config()
+            self.on_catalog()
+
     def on_execute(self, item, action):
-        kpu.set_clipboard(item.target())
+        emojis_file = self.read_emojis_file()
+
+        # Find the emoji
+        emoji = next(e for e in emojis_file['gitmojis'] if item.target() == e['code'])
+
+        # Copy emoji itself
+        if ((action and action.name() == 'copy_emoji') or (not action and self.default_copy_action == 'copy_emoji')):
+            pcopy(emoji['emoji'])
+            return
+        
+        # Copy its code
+        if (action and action.name() in ['copy_code'] or (not action and self.default_copy_action == 'copy_code')):
+            pcopy(emoji['code'])
+            return
+        
+        # Fallback
+        pcopy(emoji['code'])
 
     def generate_cache(self):
         cache_path = self.get_cache_path()
@@ -81,25 +107,46 @@ class gitmoji(kp.Plugin):
         with open(cache_path, "w") as index_file:
             json.dump(data, index_file, indent=2)
 
+    # Create all the emojis suggestions
     def get_gitmoji(self):
         if not self.emojis:
-            with open(self.get_cache_path(), "r") as emojis_file:
-                data = json.loads(emojis_file.read())
-            for item in data['gitmojis']:
-                suggestion = self.create_item(
-                    category=self.ITEMCAT,
-                    label=item['code'],
-                    short_desc=item['description'],
-                    target=item['code'],
-                    args_hint=kp.ItemArgsHint.FORBIDDEN,
-                    hit_hint=kp.ItemHitHint.IGNORE,
-                    icon_handle=self.load_icon('res://{}/icons/{}.png'.format(self.package_full_name(), item['name']))
-                )
+            emojis_file = self.read_emojis_file()
+            for item in emojis_file['gitmojis']:
+                if 'entity' in item:
+                    suggestion = self.create_item(
+                        category=self.ITEMCAT,
+                        label=item['code'],
+                        short_desc=item['description'],
+                        target=item['code'],
+                        args_hint=kp.ItemArgsHint.FORBIDDEN,
+                        hit_hint=kp.ItemHitHint.IGNORE,
+                        icon_handle=self.load_icon('res://{}/icons/{}.png'.format(self.package_full_name(), item['name']))
+                    )
 
-                self.emojis.append(suggestion)
+                    self.emojis.append(suggestion)
 
         return self.emojis
 
+    # Create the default actions to the suggestions
+    def create_actions(self):
+        self.set_actions(self.ITEMCAT, [
+            self.create_action(name="copy_code", label="Copy emoji code", short_desc="Copy the emoji :code: to clipboard"),
+            self.create_action(name="copy_emoji", label="Copy emoji", short_desc="Copy emoji to clipboard"),
+        ])
+
+    # Returns the path to the cache
     def get_cache_path(self):
         cache_path = self.get_package_cache_path(True)
         return os.path.join(cache_path, 'gitmoji.json')
+    
+    # Read all emojis from cache file
+    def read_emojis_file(self):
+        with open(self.get_cache_path(), "r") as emojis_file:
+            data = json.loads(emojis_file.read())
+        
+        return data
+    
+    # Reads the plugin's configuration
+    def read_config(self):
+        settings = self.load_settings()
+        self.default_copy_action = settings.get('default_copy_action', section='main', fallback='copy_code')
