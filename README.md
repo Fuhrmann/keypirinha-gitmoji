@@ -41,6 +41,11 @@ Open Keypirinha and type 'gitmoji'. Once the suggestion appears press TAB or ENT
 
 ## Change Log
 
+### v1.1
+* Updated the list of icon images
+* Added option to configure the default `Enter` action
+* Added actions (you can see them pressing `Tab` on a emoji)
+
 ### v1.0
 * Released
 
