@@ -14,7 +14,7 @@ class gitmoji(kp.Plugin):
     This plugin was based on: http://www.packal.org/workflow/gitmoji-0 and http://www.packal.org/workflow/gitmoji
     """
 
-    GITMOJI_URL = "https://raw.githubusercontent.com/carloscuesta/gitmoji/master/src/data/gitmojis.json"
+    GITMOJI_URL = "https://raw.githubusercontent.com/carloscuesta/gitmoji/master/packages/gitmojis/src/gitmojis.json"
     DAYS_KEEP_CACHE = 7
     ITEMCAT = kp.ItemCategory.USER_BASE + 1
     ACTION_ITEMCAT = kp.ItemCategory.USER_BASE + 2
